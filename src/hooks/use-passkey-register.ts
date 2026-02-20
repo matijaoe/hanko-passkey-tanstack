@@ -1,14 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { registerStart, registerFinish, checkUsername } from '@/lib/auth'
+import type { AsyncState } from './types'
 
 type Step = 'username' | 'passkey'
-
-type State =
-  | { status: 'idle' }
-  | { status: 'pending' }
-  | { status: 'error'; message: string }
-
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken'
 
 export function usePasskeyRegister() {
@@ -16,13 +11,7 @@ export function usePasskeyRegister() {
   const [step, setStep] = useState<Step>('username')
   const [username, setUsernameRaw] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
-  const [state, setState] = useState<State>({ status: 'idle' })
-
-  // Pending WebAuthn options from registerStart, held until registerFinish
-  const [pendingRegistration, setPendingRegistration] = useState<{
-    userId: string
-    options: Awaited<ReturnType<typeof registerStart>>['options']
-  } | null>(null)
+  const [state, setState] = useState<AsyncState>({ status: 'idle' })
 
   const isPending = state.status === 'pending'
   const error = state.status === 'error' ? state.message : null
@@ -53,13 +42,11 @@ export function usePasskeyRegister() {
     const trimmed = username.trim()
     if (!trimmed) return
 
-    // Check availability inline if not already done
+    // Check availability inline if the user didn't blur the field first
     if (usernameStatus !== 'available') {
       setUsernameStatus('checking')
       try {
-        const { available } = await checkUsername({
-          data: { username: trimmed },
-        })
+        const { available } = await checkUsername({ data: { username: trimmed } })
         setUsernameStatus(available ? 'available' : 'taken')
         if (!available) return
       } catch {
@@ -68,47 +55,23 @@ export function usePasskeyRegister() {
       }
     }
 
-    // Pre-initialize registration so step 2 is instant
-    setState({ status: 'pending' })
-    try {
-      const { userId, options } = await registerStart({
-        data: { username: trimmed },
-      })
-      setPendingRegistration({ userId, options })
-      setState({ status: 'idle' })
-      setStep('passkey')
-    } catch (err) {
-      setState({
-        status: 'error',
-        message:
-          err instanceof Error
-            ? err.message
-            : 'Failed to initialize. Please try again.',
-      })
-    }
+    setStep('passkey')
   }
 
   async function createPasskey() {
-    if (!pendingRegistration) return
+    const trimmed = username.trim()
     setState({ status: 'pending' })
     try {
-      const { userId, options } = pendingRegistration
-      const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(
-        options.publicKey,
-      )
+      const { userId, options } = await registerStart({ data: { username: trimmed } })
+      const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(options.publicKey)
       const credential = await navigator.credentials.create({ publicKey })
       const credentialJSON = (credential as PublicKeyCredential).toJSON()
-      await registerFinish({
-        data: { userId, username: username.trim(), credential: credentialJSON },
-      })
+      await registerFinish({ data: { userId, username: trimmed, credential: credentialJSON } })
       navigate({ to: '/profile' })
     } catch (err) {
       setState({
         status: 'error',
-        message:
-          err instanceof Error
-            ? err.message
-            : 'Registration failed. Please try again.',
+        message: err instanceof Error ? err.message : 'Registration failed. Please try again.',
       })
     }
   }
@@ -116,7 +79,6 @@ export function usePasskeyRegister() {
   function backToUsername() {
     setStep('username')
     setState({ status: 'idle' })
-    setPendingRegistration(null)
   }
 
   return {

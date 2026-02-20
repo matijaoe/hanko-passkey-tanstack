@@ -26,6 +26,7 @@ function LoginPage() {
           <Button
             onClick={login}
             disabled={isPending}
+            size={'lg'}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
           >
             {isPending ? 'Waiting for passkey…' : 'Sign in with a passkey'}

@@ -1,15 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { loginStart, loginFinish } from '@/lib/auth'
-
-type State =
-  | { status: 'idle' }
-  | { status: 'pending' }
-  | { status: 'error'; message: string }
+import type { AsyncState } from './types'
 
 export function usePasskeyLogin() {
   const navigate = useNavigate()
-  const [state, setState] = useState<State>({ status: 'idle' })
+  const [state, setState] = useState<AsyncState>({ status: 'idle' })
 
   const isPending = state.status === 'pending'
   const error = state.status === 'error' ? state.message : null
