@@ -1,0 +1,1 @@
+- Use sentence case for all copy.
