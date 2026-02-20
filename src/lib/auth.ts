@@ -5,14 +5,22 @@ import { v4 as uuidv4 } from 'uuid'
 import { db } from '../../db'
 import { users } from '../../db/schema'
 import { hanko } from './hanko.server'
-import { createSessionCookie, clearSessionCookie, getSessionUserId } from './session.server'
+import {
+  createSessionCookie,
+  clearSessionCookie,
+  getSessionUserId,
+} from './session.server'
 
 export const getMe = createServerFn({ method: 'GET' }).handler(async () => {
   const userId = await getSessionUserId()
-  if (!userId) return null
+  if (!userId) {
+    return null
+  }
 
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) })
-  if (!user) return null
+  if (!user) {
+    return null
+  }
 
   return { id: user.id, username: user.username, createdAt: user.createdAt }
 })
@@ -32,7 +40,9 @@ export const registerStart = createServerFn({ method: 'POST' })
   .handler(async (ctx) => {
     const { username } = ctx.data
 
-    const existing = await db.query.users.findFirst({ where: eq(users.username, username) })
+    const existing = await db.query.users.findFirst({
+      where: eq(users.username, username),
+    })
     if (existing) throw new Error('Username already taken')
 
     const userId = uuidv4()
@@ -42,7 +52,10 @@ export const registerStart = createServerFn({ method: 'POST' })
 
 // Finalizes WebAuthn registration, then writes user to DB only on success.
 export const registerFinish = createServerFn({ method: 'POST' })
-  .inputValidator((input: unknown) => input as { userId: string; username: string; credential: unknown })
+  .inputValidator(
+    (input: unknown) =>
+      input as { userId: string; username: string; credential: unknown },
+  )
   .handler(async (ctx) => {
     const { userId, username, credential } = ctx.data
 
@@ -53,9 +66,11 @@ export const registerFinish = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const loginStart = createServerFn({ method: 'POST' }).handler(async () => {
-  return hanko.login.initialize()
-})
+export const loginStart = createServerFn({ method: 'POST' }).handler(
+  async () => {
+    return hanko.login.initialize()
+  },
+)
 
 export const loginFinish = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => input as { credential: unknown })

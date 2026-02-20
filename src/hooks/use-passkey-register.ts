@@ -1,8 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { registerStart, registerFinish, checkUsername } from '@/lib/auth'
-import type { AsyncState } from './types'
 
 type Step = 'username' | 'passkey'
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken'
@@ -13,15 +12,6 @@ export function usePasskeyRegister() {
   const [step, setStep] = useState<Step>('username')
   const [username, setUsernameRaw] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
-  const [state, setState] = useState<AsyncState>({ status: 'idle' })
-
-  const isPending = state.status === 'pending'
-  const error = state.status === 'error' ? state.message : null
-  const canContinue =
-    !!username.trim() &&
-    usernameStatus !== 'taken' &&
-    usernameStatus !== 'checking' &&
-    !isPending
 
   function setUsername(value: string) {
     setUsernameRaw(value)
@@ -44,11 +34,12 @@ export function usePasskeyRegister() {
     const trimmed = username.trim()
     if (!trimmed) return
 
-    // Check availability inline if the user didn't blur the field first
     if (usernameStatus !== 'available') {
       setUsernameStatus('checking')
       try {
-        const { available } = await checkUsername({ data: { username: trimmed } })
+        const { available } = await checkUsername({
+          data: { username: trimmed },
+        })
         setUsernameStatus(available ? 'available' : 'taken')
         if (!available) return
       } catch {
@@ -60,29 +51,47 @@ export function usePasskeyRegister() {
     setStep('passkey')
   }
 
-  async function createPasskey() {
-    const trimmed = username.trim()
-    setState({ status: 'pending' })
-    try {
-      const { userId, options } = await registerStart({ data: { username: trimmed } })
-      const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(options.publicKey)
+  const {
+    isPending,
+    error,
+    mutate,
+  } = useMutation({
+    mutationFn: async () => {
+      const trimmed = username.trim()
+      const { userId, options } = await registerStart({
+        data: { username: trimmed },
+      })
+      const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(
+        options.publicKey,
+      )
       const credential = await navigator.credentials.create({ publicKey })
       const credentialJSON = (credential as PublicKeyCredential).toJSON()
-      await registerFinish({ data: { userId, username: trimmed, credential: credentialJSON } })
+      await registerFinish({
+        data: { userId, username: trimmed, credential: credentialJSON },
+      })
+    },
+    onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['me'] })
       navigate({ to: '/profile' })
-    } catch (err) {
-      setState({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Registration failed. Please try again.',
-      })
-    }
-  }
+    },
+    onError: (err) => err,
+  })
 
   function backToUsername() {
     setStep('username')
-    setState({ status: 'idle' })
   }
+
+  const canContinue =
+    !!username.trim() &&
+    usernameStatus !== 'taken' &&
+    usernameStatus !== 'checking' &&
+    !isPending
+
+  const errorMessage = error
+    ? error instanceof Error
+      ? error.message
+      : 'Registration failed. Please try again.'
+    : null
 
   return {
     step,
@@ -91,10 +100,10 @@ export function usePasskeyRegister() {
     usernameStatus,
     checkAvailability,
     continueToPasskey,
-    createPasskey,
+    createPasskey: () => mutate(),
     backToUsername,
     isPending,
-    error,
+    error: errorMessage,
     canContinue,
   }
 }
