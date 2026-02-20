@@ -31,7 +31,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Passkey Demo' },
+      { title: 'Passkey demo' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
@@ -90,7 +90,7 @@ function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b bg-background px-6 py-3">
       <Link to="/" className="text-base font-bold tracking-tight">
-        Passkey Demo
+        Passkey demo
       </Link>
 
       <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-# Passkey Demo
+# Passkey demo
 
 Passkey-only authentication demo built with TanStack Start, Hanko Passkeys API, Drizzle ORM + Turso, and shadcn/ui.
 

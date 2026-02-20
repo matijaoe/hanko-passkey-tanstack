@@ -17,6 +17,16 @@ export const getMe = createServerFn({ method: 'GET' }).handler(async () => {
   return { id: user.id, username: user.username, createdAt: user.createdAt }
 })
 
+export const checkUsername = createServerFn({ method: 'GET' })
+  .inputValidator((input: unknown) => input as { username: string })
+  .handler(async (ctx) => {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.username, ctx.data.username),
+    })
+    return { available: !existing }
+  })
+
+// Initializes WebAuthn registration with Hanko. Does NOT write to DB yet.
 export const registerStart = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => input as { username: string })
   .handler(async (ctx) => {
@@ -26,18 +36,18 @@ export const registerStart = createServerFn({ method: 'POST' })
     if (existing) throw new Error('Username already taken')
 
     const userId = uuidv4()
-    await db.insert(users).values({ id: userId, username })
-
     const options = await hanko.registration.initialize({ userId, username })
     return { userId, options }
   })
 
+// Finalizes WebAuthn registration, then writes user to DB only on success.
 export const registerFinish = createServerFn({ method: 'POST' })
-  .inputValidator((input: unknown) => input as { userId: string; credential: unknown })
+  .inputValidator((input: unknown) => input as { userId: string; username: string; credential: unknown })
   .handler(async (ctx) => {
-    const { userId, credential } = ctx.data
+    const { userId, username, credential } = ctx.data
 
     await hanko.registration.finalize(credential as any)
+    await db.insert(users).values({ id: userId, username })
     await createSessionCookie(userId)
 
     return { success: true }
