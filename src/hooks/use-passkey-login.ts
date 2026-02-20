@@ -1,16 +1,17 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { loginStart, loginFinish } from '@/lib/auth'
+import { loginFinish, loginStart } from '@/lib/auth'
 
+/**
+ * Handles the full passkey login flow.
+ * Calls loginStart to get WebAuthn options, prompts the browser for a passkey,
+ * then calls loginFinish to verify and create a session.
+ */
 export function usePasskeyLogin() {
   const navigate = useNavigate()
   const qc = useQueryClient()
 
-  const {
-    isPending,
-    error,
-    mutate,
-  } = useMutation({
+  const { isPending, error, mutate } = useMutation({
     mutationFn: async () => {
       const options = await loginStart()
       if (!options.publicKey) {
@@ -19,8 +20,10 @@ export function usePasskeyLogin() {
       const publicKey = PublicKeyCredential.parseRequestOptionsFromJSON(
         options.publicKey as PublicKeyCredentialRequestOptionsJSON,
       )
-      const credential = await navigator.credentials.get({ publicKey })
-      const credentialJSON = (credential as PublicKeyCredential).toJSON()
+      const credential = (await navigator.credentials.get({
+        publicKey,
+      })) as PublicKeyCredential
+      const credentialJSON = credential.toJSON()
       await loginFinish({ data: { credential: credentialJSON } })
     },
     onSuccess: async () => {

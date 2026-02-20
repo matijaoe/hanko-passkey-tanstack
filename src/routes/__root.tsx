@@ -4,28 +4,14 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
-  useNavigate,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import {
-  QueryClient,
-  QueryClientProvider,
-  queryOptions,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { IconFingerprint } from '@tabler/icons-react'
-import { getMe, logout } from '@/lib/auth'
-
 import appCss from '../styles.css?url'
-
-const queryClient = new QueryClient()
-
-const getMeQueryOptions = queryOptions({
-  queryKey: ['me'],
-  queryFn: () => getMe(),
-})
+import { queryClient, getMeQueryOptions } from '@/lib/query'
+import { useLogout } from '@/hooks/use-logout'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -36,6 +22,8 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
+
+  loader: () => queryClient.ensureQueryData(getMeQueryOptions),
 
   component: RootComponent,
   shellComponent: RootDocument,
@@ -78,20 +66,18 @@ function RootComponent() {
 }
 
 function Navbar() {
-  const { data: user } = useQuery(getMeQueryOptions)
-  const qc = useQueryClient()
-  const navigate = useNavigate()
-
-  const handleLogout = async () => {
-    await logout()
-    await qc.invalidateQueries({ queryKey: ['me'] })
-    navigate({ to: '/' })
-  }
+  const loaderData = Route.useLoaderData()
+  const { data: user } = useQuery({
+    ...getMeQueryOptions,
+    // Prevents a flash of unauthenticated state on first render — the loader
+    // fetches this on the server, and initialData seeds the client cache before hydration.
+    initialData: loaderData ?? undefined,
+  })
+  const handleLogout = useLogout()
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
-
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="flex size-7 items-center justify-center border border-primary/40 bg-primary/10 transition-colors group-hover:border-primary/70 group-hover:bg-primary/15">
             <IconFingerprint size={15} className="text-primary" />
@@ -137,7 +123,6 @@ function Navbar() {
             </>
           )}
         </div>
-
       </div>
     </nav>
   )

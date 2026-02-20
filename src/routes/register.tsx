@@ -1,15 +1,15 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
+import { IconArrowLeft } from '@tabler/icons-react'
 import { usePasskeyRegister } from '@/hooks/use-passkey-register'
-import { getMe } from '@/lib/auth'
+import { queryClient, getMeQueryOptions } from '@/lib/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthCard } from '@/components/auth-card'
-import { IconArrowLeft } from '@tabler/icons-react'
 
 export const Route = createFileRoute('/register')({
   beforeLoad: async () => {
-    const user = await getMe()
+    const user = await queryClient.ensureQueryData(getMeQueryOptions)
     if (user) throw redirect({ to: '/profile' })
   },
   component: RegisterPage,
@@ -53,7 +53,9 @@ function RegisterPage() {
           {isPending ? 'Waiting for passkey…' : 'Create a passkey'}
         </Button>
 
-        {error && <p className="text-center text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="text-center text-sm text-destructive">{error}</p>
+        )}
       </AuthCard>
     )
   }
@@ -64,7 +66,10 @@ function RegisterPage() {
       footer={
         <>
           Already have an account?{' '}
-          <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/login"
+            className="text-primary underline-offset-4 hover:underline"
+          >
             Sign in
           </Link>
         </>
@@ -77,7 +82,9 @@ function RegisterPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           onBlur={checkAvailability}
-          onKeyDown={(e) => e.key === 'Enter' && canContinue && continueToPasskey()}
+          onKeyDown={(e) =>
+            e.key === 'Enter' && canContinue && continueToPasskey()
+          }
           placeholder="Pick a username"
           disabled={isPending}
           autoFocus
@@ -102,7 +109,11 @@ function RegisterPage() {
         )}
       </div>
 
-      <Button onClick={continueToPasskey} disabled={!canContinue} className="w-full">
+      <Button
+        onClick={continueToPasskey}
+        disabled={!canContinue}
+        className="w-full"
+      >
         {isPending ? 'Checking…' : 'Continue'}
       </Button>
 

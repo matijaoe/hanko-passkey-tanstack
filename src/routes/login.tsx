@@ -1,12 +1,12 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { usePasskeyLogin } from '@/hooks/use-passkey-login'
 import { Button } from '@/components/ui/button'
-import { getMe } from '@/lib/auth'
+import { queryClient, getMeQueryOptions } from '@/lib/query'
 import { AuthCard } from '@/components/auth-card'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
-    const user = await getMe()
+    const user = await queryClient.ensureQueryData(getMeQueryOptions)
     if (user) throw redirect({ to: '/profile' })
   },
   component: LoginPage,

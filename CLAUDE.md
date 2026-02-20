@@ -1,1 +1,2 @@
-- Use sentence case for all copy.
+- Use sentence case for all copy
+- Use `pnpm` for package management

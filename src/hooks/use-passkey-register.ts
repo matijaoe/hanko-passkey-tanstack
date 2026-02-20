@@ -1,14 +1,20 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { registerStart, registerFinish, checkUsername } from '@/lib/auth'
+import { checkUsername, registerFinish, registerStart } from '@/lib/auth'
 
 type Step = 'username' | 'passkey'
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken'
 
+/**
+ * Handles the two-step passkey registration flow.
+ * Step 1: collect and validate a username.
+ * Step 2: prompt the browser to create a passkey and finalize registration.
+ */
 export function usePasskeyRegister() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+
   const [step, setStep] = useState<Step>('username')
   const [username, setUsernameRaw] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
@@ -51,11 +57,7 @@ export function usePasskeyRegister() {
     setStep('passkey')
   }
 
-  const {
-    isPending,
-    error,
-    mutate,
-  } = useMutation({
+  const { isPending, error, mutate } = useMutation({
     mutationFn: async () => {
       const trimmed = username.trim()
       const { userId, options } = await registerStart({
@@ -64,8 +66,10 @@ export function usePasskeyRegister() {
       const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(
         options.publicKey,
       )
-      const credential = await navigator.credentials.create({ publicKey })
-      const credentialJSON = (credential as PublicKeyCredential).toJSON()
+      const credential = (await navigator.credentials.create({
+        publicKey,
+      })) as PublicKeyCredential
+      const credentialJSON = credential.toJSON()
       await registerFinish({
         data: { userId, username: trimmed, credential: credentialJSON },
       })
