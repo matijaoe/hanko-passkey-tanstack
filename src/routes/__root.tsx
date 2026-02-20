@@ -12,6 +12,7 @@ import { IconFingerprint } from '@tabler/icons-react'
 import appCss from '../styles.css?url'
 import { queryClient, getMeQueryOptions } from '@/lib/query'
 import { useLogout } from '@/hooks/use-logout'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -93,25 +94,16 @@ function Navbar() {
               <span className="mr-2 font-mono text-xs text-muted-foreground">
                 {user.username}
               </span>
-              <Link
-                to="/profile"
-                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
+              <Link to="/profile" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                 Profile
               </Link>
-              <button
-                onClick={handleLogout}
-                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
                 Sign out
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
+              <Link to="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                 Sign in
               </Link>
               <Link

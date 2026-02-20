@@ -1,5 +1,5 @@
 import { QueryClient, queryOptions } from '@tanstack/react-query'
-import { getMe } from './auth'
+import { getMe, listPasskeys } from './auth'
 
 export const queryClient = new QueryClient()
 
@@ -10,3 +10,8 @@ export const getMeQueryOptions = queryOptions({
   // this query. Never refetch automatically.
   staleTime: Infinity,
 })
+
+export const passkeysQueries = {
+  list: (userId: string) =>
+    queryOptions({ queryKey: ['passkeys', userId], queryFn: () => listPasskeys() }),
+}

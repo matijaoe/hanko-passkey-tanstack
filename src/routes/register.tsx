@@ -2,7 +2,7 @@ import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { usePasskeyRegister } from '@/hooks/use-passkey-register'
 import { queryClient, getMeQueryOptions } from '@/lib/query'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthCard } from '@/components/auth-card'
@@ -10,7 +10,7 @@ import { AuthCard } from '@/components/auth-card'
 export const Route = createFileRoute('/register')({
   beforeLoad: async () => {
     const user = await queryClient.ensureQueryData(getMeQueryOptions)
-    if (user) throw redirect({ to: '/profile' })
+    if (user) { throw redirect({ to: '/profile' }) }
   },
   component: RegisterPage,
 })
@@ -36,13 +36,10 @@ function RegisterPage() {
         title="Create a passkey"
         description="Sign in to your account easily and securely with a passkey. Your biometric data is only stored on your device and never shared."
         footer={
-          <button
-            onClick={backToUsername}
-            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <IconArrowLeft size={13} />
+          <Button variant="ghost" size="sm" onClick={backToUsername}>
+            <IconArrowLeft />
             Back
-          </button>
+          </Button>
         }
       >
         <Button
@@ -66,10 +63,7 @@ function RegisterPage() {
       footer={
         <>
           Already have an account?{' '}
-          <Link
-            to="/login"
-            className="text-primary underline-offset-4 hover:underline"
-          >
+          <Link to="/login" className={buttonVariants({ variant: 'link' })}>
             Sign in
           </Link>
         </>
@@ -82,9 +76,9 @@ function RegisterPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           onBlur={checkAvailability}
-          onKeyDown={(e) =>
-            e.key === 'Enter' && canContinue && continueToPasskey()
-          }
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && canContinue) { continueToPasskey() }
+          }}
           placeholder="Pick a username"
           disabled={isPending}
           autoFocus

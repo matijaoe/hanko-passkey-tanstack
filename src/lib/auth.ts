@@ -132,3 +132,103 @@ export const logout = createServerFn({ method: 'POST' }).handler(async () => {
   clearSessionCookie()
   return { success: true }
 })
+
+// ─── Passkey management ───────────────────────────────────────────────────────
+
+export type Passkey = {
+  id: string
+  name: string
+  last_used_at: string | null
+  created_at: string
+}
+
+function hankoApiUrl(path: string) {
+  return `https://passkeys.hanko.io/${process.env.HANKO_TENANT_ID}${path}`
+}
+
+function hankoApiHeaders() {
+  return { apiKey: process.env.HANKO_API_KEY!, 'Content-Type': 'application/json' }
+}
+
+async function fetchUserPasskeys(userId: string): Promise<Passkey[]> {
+  const res = await fetch(hankoApiUrl(`/credentials?user_id=${userId}`), {
+    headers: hankoApiHeaders(),
+  })
+  if (!res.ok) { throw new Error('Failed to list passkeys') }
+  return res.json()
+}
+
+/**
+ * Lists all passkeys for the authenticated user.
+ */
+export const listPasskeys = createServerFn({ method: 'GET' }).handler(async () => {
+  const userId = await getSessionUserId()
+  if (!userId) { throw new Error('Unauthorized') }
+  return fetchUserPasskeys(userId)
+})
+
+/**
+ * Renames a passkey. Verifies ownership before updating.
+ */
+export const renamePasskey = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ credentialId: z.string(), name: z.string().min(1).max(64) }))
+  .handler(async ({ data }) => {
+    const userId = await getSessionUserId()
+    if (!userId) { throw new Error('Unauthorized') }
+
+    const passkeys = await fetchUserPasskeys(userId)
+    if (!passkeys.some((pk) => pk.id === data.credentialId)) { throw new Error('Unauthorized') }
+
+    const res = await fetch(hankoApiUrl(`/credentials/${data.credentialId}`), {
+      method: 'PATCH',
+      headers: hankoApiHeaders(),
+      body: JSON.stringify({ name: data.name }),
+    })
+    if (!res.ok) { throw new Error('Failed to rename passkey') }
+    return { success: true }
+  })
+
+/**
+ * Deletes a passkey. Verifies ownership before deleting.
+ */
+export const deletePasskey = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ credentialId: z.string() }))
+  .handler(async ({ data }) => {
+    const userId = await getSessionUserId()
+    if (!userId) { throw new Error('Unauthorized') }
+
+    const passkeys = await fetchUserPasskeys(userId)
+    if (!passkeys.some((pk) => pk.id === data.credentialId)) { throw new Error('Unauthorized') }
+
+    const res = await fetch(hankoApiUrl(`/credentials/${data.credentialId}`), {
+      method: 'DELETE',
+      headers: hankoApiHeaders(),
+    })
+    if (!res.ok) { throw new Error('Failed to delete passkey') }
+    return { success: true }
+  })
+
+/**
+ * Step 1 of adding a new passkey to an existing account.
+ * Returns WebAuthn creation options for the browser.
+ */
+export const addPasskeyStart = createServerFn({ method: 'POST' }).handler(async () => {
+  const userId = await getSessionUserId()
+  if (!userId) { throw new Error('Unauthorized') }
+
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) })
+  if (!user) { throw new Error('User not found') }
+
+  return hanko.registration.initialize({ userId: user.id, username: user.username })
+})
+
+/**
+ * Step 2 of adding a new passkey. Finalizes the WebAuthn ceremony.
+ * No DB write needed — user already exists.
+ */
+export const addPasskeyFinish = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ credential: z.unknown() }))
+  .handler(async ({ data }) => {
+    await hanko.registration.finalize(data.credential as any)
+    return { success: true }
+  })

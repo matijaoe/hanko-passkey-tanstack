@@ -26,7 +26,9 @@ export function usePasskeyRegister() {
 
   async function checkAvailability() {
     const trimmed = username.trim()
-    if (!trimmed) return
+    if (!trimmed) {
+      return
+    }
     setUsernameStatus('checking')
     try {
       const { available } = await checkUsername({ data: { username: trimmed } })
@@ -38,7 +40,9 @@ export function usePasskeyRegister() {
 
   async function continueToPasskey() {
     const trimmed = username.trim()
-    if (!trimmed) return
+    if (!trimmed) {
+      return
+    }
 
     if (usernameStatus !== 'available') {
       setUsernameStatus('checking')
@@ -47,7 +51,9 @@ export function usePasskeyRegister() {
           data: { username: trimmed },
         })
         setUsernameStatus(available ? 'available' : 'taken')
-        if (!available) return
+        if (!available) {
+          return
+        }
       } catch {
         setUsernameStatus('idle')
         return

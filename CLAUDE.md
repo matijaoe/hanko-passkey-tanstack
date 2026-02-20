@@ -1,2 +1,4 @@
 - Use sentence case for all copy
 - Use `pnpm` for package management
+- Control flow (`if`, `else`, `throw`) always requires braces, never inline
+- Arrow functions: use implicit return for single expressions (`() => expr`); use braces with newlines for multi-statement bodies
