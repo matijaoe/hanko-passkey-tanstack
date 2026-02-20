@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthCard } from '@/components/auth-card'
+import { IconArrowLeft } from '@tabler/icons-react'
 
 export const Route = createFileRoute('/register')({
   beforeLoad: async () => {
@@ -35,15 +36,19 @@ function RegisterPage() {
         title="Create a passkey"
         description="Sign in to your account easily and securely with a passkey. Your biometric data is only stored on your device and never shared."
         footer={
-          <button onClick={backToUsername} className="underline underline-offset-4 hover:text-primary">
-            ← Back
+          <button
+            onClick={backToUsername}
+            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <IconArrowLeft size={13} />
+            Back
           </button>
         }
       >
         <Button
           onClick={createPasskey}
           disabled={isPending}
-          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          className="w-full glow-jade"
         >
           {isPending ? 'Waiting for passkey…' : 'Create a passkey'}
         </Button>
@@ -59,7 +64,7 @@ function RegisterPage() {
       footer={
         <>
           Already have an account?{' '}
-          <Link to="/login" className="underline underline-offset-4 hover:text-primary">
+          <Link to="/login" className="text-primary underline-offset-4 hover:underline">
             Sign in
           </Link>
         </>
@@ -78,13 +83,22 @@ function RegisterPage() {
           autoFocus
         />
         {usernameStatus === 'checking' && (
-          <p className="text-xs text-muted-foreground">Checking availability…</p>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-muted-foreground animate-pulse" />
+            Checking availability…
+          </p>
         )}
         {usernameStatus === 'available' && (
-          <p className="text-xs text-green-600">Username is available</p>
+          <p className="flex items-center gap-1.5 text-xs text-primary">
+            <span className="size-1.5 rounded-full bg-primary" />
+            Username is available
+          </p>
         )}
         {usernameStatus === 'taken' && (
-          <p className="text-xs text-destructive">Username is taken</p>
+          <p className="flex items-center gap-1.5 text-xs text-destructive">
+            <span className="size-1.5 rounded-full bg-destructive" />
+            Username is taken
+          </p>
         )}
       </div>
 

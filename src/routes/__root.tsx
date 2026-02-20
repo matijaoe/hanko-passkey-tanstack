@@ -15,6 +15,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
+import { IconFingerprint } from '@tabler/icons-react'
 import { getMe, logout } from '@/lib/auth'
 
 import appCss from '../styles.css?url'
@@ -42,7 +43,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -88,44 +89,55 @@ function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b bg-background px-6 py-3">
-      <Link to="/" className="text-base font-bold tracking-tight">
-        Passkey demo
-      </Link>
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
 
-      <div className="flex items-center gap-4">
-        {user ? (
-          <>
-            <span className="text-sm text-muted-foreground">{user.username}</span>
-            <Link
-              to="/profile"
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Profile
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Sign out
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/login"
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/register"
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Register
-            </Link>
-          </>
-        )}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex size-7 items-center justify-center border border-primary/40 bg-primary/10 transition-colors group-hover:border-primary/70 group-hover:bg-primary/15">
+            <IconFingerprint size={15} className="text-primary" />
+          </div>
+          <span className="font-display text-sm font-bold tracking-[0.2em] uppercase text-foreground">
+            Passkey
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-1">
+          {user ? (
+            <>
+              <span className="mr-2 font-mono text-xs text-muted-foreground">
+                {user.username}
+              </span>
+              <Link
+                to="/profile"
+                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-sm border border-primary/35 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+
       </div>
     </nav>
   )

@@ -1,14 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { getMe, logout } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { IconFingerprint } from '@tabler/icons-react'
 
 export const Route = createFileRoute('/profile')({
   beforeLoad: async () => {
@@ -35,33 +28,75 @@ function ProfilePage() {
   })
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Your profile</CardTitle>
-          <CardDescription>Manage your account details</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">
-                Username
-              </p>
-              <p className="text-2xl font-semibold">{user.username}</p>
+    <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center overflow-hidden auth-bg">
+
+      {/* Ambient glow */}
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[500px] rounded-full blur-[120px]"
+        style={{ background: 'oklch(0.78 0.24 152 / 0.07)' }}
+      />
+
+      <div className="relative w-full max-w-sm px-5 py-10 animate-fade-up">
+
+        {/* Identity card */}
+        <div className="relative border border-border bg-card gradient-top-border">
+
+          {/* Card header */}
+          <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+            <div className="flex size-8 items-center justify-center border border-primary/35 bg-primary/10">
+              <IconFingerprint size={16} className="text-primary" />
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">
-                Member since
+            <div className="flex-1">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Identity
               </p>
-              <p className="text-base">{memberSince}</p>
+              <p className="font-display text-sm font-bold leading-tight">Verified</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-primary">
+              <span className="size-1.5 rounded-full bg-primary" style={{ animation: 'glow-pulse 2s ease-in-out infinite' }} />
+              Active
             </div>
           </div>
-          <Separator />
-          <Button variant="outline" onClick={handleLogout} className="w-full">
-            Sign out
-          </Button>
-        </CardContent>
-      </Card>
+
+          {/* Card body */}
+          <div className="space-y-5 px-5 py-5">
+
+            <div>
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Username
+              </p>
+              <p className="font-display text-3xl font-bold tracking-tight">{user.username}</p>
+            </div>
+
+            <div>
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Member since
+              </p>
+              <p className="text-sm">{memberSince}</p>
+            </div>
+
+            <div className="pt-1">
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="w-full"
+              >
+                Sign out
+              </Button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Secured by passkey badge */}
+        <div className="mt-4 flex items-center justify-center gap-1.5">
+          <IconFingerprint size={11} className="text-primary/60" />
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">
+            Secured by passkey
+          </span>
+        </div>
+
+      </div>
     </div>
   )
 }
