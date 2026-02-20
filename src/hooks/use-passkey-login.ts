@@ -1,10 +1,12 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { loginStart, loginFinish } from '@/lib/auth'
 import type { AsyncState } from './types'
 
 export function usePasskeyLogin() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [state, setState] = useState<AsyncState>({ status: 'idle' })
 
   const isPending = state.status === 'pending'
@@ -21,6 +23,7 @@ export function usePasskeyLogin() {
       const credential = await navigator.credentials.get({ publicKey })
       const credentialJSON = (credential as PublicKeyCredential).toJSON()
       await loginFinish({ data: { credential: credentialJSON } })
+      await qc.invalidateQueries({ queryKey: ['me'] })
       navigate({ to: '/profile' })
     } catch (err) {
       setState({

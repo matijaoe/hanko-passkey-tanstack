@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { registerStart, registerFinish, checkUsername } from '@/lib/auth'
 import type { AsyncState } from './types'
 
@@ -8,6 +9,7 @@ type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken'
 
 export function usePasskeyRegister() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [step, setStep] = useState<Step>('username')
   const [username, setUsernameRaw] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
@@ -67,6 +69,7 @@ export function usePasskeyRegister() {
       const credential = await navigator.credentials.create({ publicKey })
       const credentialJSON = (credential as PublicKeyCredential).toJSON()
       await registerFinish({ data: { userId, username: trimmed, credential: credentialJSON } })
+      await qc.invalidateQueries({ queryKey: ['me'] })
       navigate({ to: '/profile' })
     } catch (err) {
       setState({
