@@ -102,15 +102,23 @@ Auth routes (`/login`, `/register`) do the inverse — they redirect to `/profil
 
 ### Auth state in the navbar
 
-`queryClient` and `getMeQueryOptions` are defined in `src/lib/query.ts` and shared across the whole app. The root route's `loader` fetches the current user on every page load:
+`queryClient` and `getMeQueryOptions` are defined in `src/lib/query.ts` and shared across the whole app. The root route's `loader` fetches the current user on every page load, with different behaviour on server vs client:
 
-```ts
-loader: () => queryClient.ensureQueryData(getMeQueryOptions)
-```
+- **Server**: calls `getMe()` directly and writes the result into the cache via `setQueryData`. The `queryClient` is a module-level singleton shared across all SSR requests, so going through the cache (with `staleTime: Infinity`) would serve one user's session to the next request. Bypassing it entirely avoids that.
+- **Client**: uses `ensureQueryData(getMeQueryOptions)` with `staleTime: Infinity`. The cache is seeded from the server-rendered state on hydration and only invalidated explicitly — on login, registration, and logout.
 
-The result is passed as `initialData` to `useQuery` in the navbar, seeding the client-side cache before hydration — so the correct buttons render on the very first paint with no flash.
+The loader result is passed as `initialData` to `useQuery` in the navbar, so the correct buttons render on the first paint with no flash.
 
-`getMeQueryOptions` has `staleTime: Infinity`, meaning React Query never refetches automatically. The cache is only updated by explicit invalidation — which happens after login, registration, and logout. This ensures `getMe` is called at most once per page load.
+### Passkey management
+
+Once logged in, users can manage their passkeys from the profile page:
+
+- **Listing** — `listPasskeys` calls the Hanko REST API (`GET /credentials?user_id=…`) to fetch all passkeys for the current user.
+- **Renaming** — `renamePasskey` verifies ownership then calls `PATCH /credentials/{id}` with the new name.
+- **Deleting** — `deletePasskey` verifies ownership then calls `DELETE /credentials/{id}`. A warning is shown if the user is about to delete their only passkey.
+- **Adding** — uses the same WebAuthn registration ceremony as sign-up (`addPasskeyStart` / `addPasskeyFinish`), but skips the DB write since the user already exists.
+
+All credential mutations go through the `usePasskeys` hook, which invalidates the passkey list cache on success. The passkey list is prefetched server-side in the profile route's `loader` using `passkeysQueries.list(userId)`, so no loading state is shown on the first render.
 
 ### Input validation
 

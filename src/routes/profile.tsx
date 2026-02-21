@@ -181,7 +181,7 @@ function PasskeyItem({
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center -ml-2">
               <Button
                 variant="link"
                 onClick={() => onRenameStart(passkey.id, passkey.name)}
@@ -344,7 +344,7 @@ function ProfilePage() {
               )}
 
               <Button
-                size="xs"
+                size="sm"
                 variant="ghost"
                 onClick={() => addMutation.mutate()}
                 disabled={addMutation.isPending}

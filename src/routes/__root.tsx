@@ -11,6 +11,7 @@ import { QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { IconFingerprint } from '@tabler/icons-react'
 import appCss from '../styles.css?url'
 import { queryClient, getMeQueryOptions } from '@/lib/query'
+import { getMe } from '@/lib/auth'
 import { useLogout } from '@/hooks/use-logout'
 import { Button, buttonVariants } from '@/components/ui/button'
 
@@ -24,7 +25,19 @@ export const Route = createRootRoute({
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
 
-  loader: () => queryClient.ensureQueryData(getMeQueryOptions),
+  loader: async () => {
+    // On the server the queryClient is a module-level singleton shared across
+    // all requests. We must bypass the cache and always call getMe() directly,
+    // otherwise one user's session bleeds into the next server-side render.
+    // On the client the cache is per-tab and invalidated explicitly on auth
+    // changes, so ensureQueryData (staleTime: Infinity) is correct there.
+    if (typeof window === 'undefined') {
+      const user = await getMe()
+      queryClient.setQueryData(getMeQueryOptions.queryKey, user ?? null)
+      return user ?? null
+    }
+    return queryClient.ensureQueryData(getMeQueryOptions)
+  },
 
   component: RootComponent,
   shellComponent: RootDocument,
