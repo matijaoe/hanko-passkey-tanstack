@@ -2,6 +2,9 @@
 
 Passkey-only authentication demo built with TanStack Start, Hanko Passkeys API, Drizzle ORM + Turso, and shadcn/ui.
 
+<img width="3456" height="1938" src="https://github.com/user-attachments/assets/f1dcb215-45ab-439d-a04f-ca476c98ce91" />
+
+
 ## Features
 
 - No passwords — authentication is entirely passkey-based
