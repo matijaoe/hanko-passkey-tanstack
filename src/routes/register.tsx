@@ -46,6 +46,7 @@ function RegisterPage() {
           onClick={createPasskey}
           disabled={isPending}
           className="w-full glow-jade"
+          autoFocus
         >
           {isPending ? 'Waiting for passkey…' : 'Create a passkey'}
         </Button>
